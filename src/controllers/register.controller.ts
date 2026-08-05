@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { User } from "../models/user.model.js";
 import { findUserByEmail, findUserByUsername } from "../services/user.service.js";
 import { issueToken } from "../services/token.service.js";
+import { cookieOptions } from "../utils/cookieOptions.js";
 
 const register = async (req: Request, res: Response): Promise<void> => {
 
@@ -36,13 +37,7 @@ const register = async (req: Request, res: Response): Promise<void> => {
 
         const { accessToken, refreshToken } = issueToken((user._id).toString());
 
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-
-        })
+        res.cookie("refreshToken", refreshToken, cookieOptions)
 
         res.status(201).json({
             message: "User registered successfully.",
