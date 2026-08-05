@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { User } from "../models/user.model.js";
 import { findUserByEmail, findUserByUsername } from "../services/user.service.js";
-import jwt from "jsonwebtoken";
-import env from "../configs/env.config.js";
+import { issueToken } from "../services/token.service.js";
 
 const register = async (req: Request, res: Response): Promise<void> => {
 
@@ -35,14 +34,15 @@ const register = async (req: Request, res: Response): Promise<void> => {
             password,
         })
 
-        const token = jwt.sign(
-            {
-                id: user._id,
-                username: user.username,
-                password: user.password,
-            },
-            env.JWT_SECRET
-        )
+        const { accessToken, refreshToken } = issueToken((user._id).toString());
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+
+        })
 
         res.status(201).json({
             message: "User registered successfully.",
@@ -52,6 +52,7 @@ const register = async (req: Request, res: Response): Promise<void> => {
                 username: user.username,
                 email: user.email,
             },
+            accessToken,
         });
 
     } catch (error) {
